@@ -11,7 +11,7 @@ import datetime
 def create_config_file():
 	email = input("Enter your email: ")
 	password = input("Enter your password: ")
-	pref_card = input("Enter the last four digits of your preffered card: ")
+	pref_card = input("Enter the last four digits of your preferred card: ")
 	reload_amount = input("Enter the reload amount: ")
 	
 	#create a credentials section
@@ -22,7 +22,7 @@ def create_config_file():
 
 	#create a settings section
 	config.add_section("Settings")
-	config.set("Settings", "preffered_card", pref_card)
+	config.set("Settings", "preferred_card", pref_card)
 	config.set("Settings", "reload_amount", reload_amount)
 
 	#create a purchaseTracker section
@@ -65,12 +65,12 @@ def change_cards():
 	except:
 		print("payment method already displayed")
 
-	WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-number='" + preffered_card + "']"))).click()
+	WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-number='" + preferred_card + "']"))).click()
 
 	#card number verification required
 	try:
 		print("checking if card number is required")
-		card_input = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='ending in" + preffered_card +"']")))
+		card_input = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='ending in" + preferred_card +"']")))
 		card_number = input("Enter the card number for verification purposes: ")
 		card_input.clear()
 		card_input.send_keys(card_number)
@@ -106,7 +106,7 @@ except:
 
 email = credentials["email"]
 password = credentials["password"]
-preffered_card = settings["preffered_card"]
+preferred_card = settings["preferred_card"]
 reload_amount = settings["reload_amount"]
 
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
@@ -173,8 +173,8 @@ attempts = 0
 while attempts < 3:
 	print("\nChecking if we need to switch payment methods. Attempt", attempts + 1, "of 3")
 	validate_card = driver.find_element(By.XPATH, "//*[@id='payment-information']/div[1]/div/span[2]/span").text
-	if validate_card == preffered_card:
-		print("card being used matches the preffered card")
+	if validate_card == preferred_card:
+		print("card being used matches the preferred card")
 		break
 	else:
 		print("Not the same card. Switching payment methods")
@@ -189,7 +189,7 @@ if attempts >= 3:
 place_order = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "[name='placeYourOrder1']"))).click()
 
 try:
-	confirmation = driver.find_element(By.CLASS_NAME, "a-alert-heading").text
+	confirmation = WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.CLASS_NAME, "a-alert-heading"))).text
 except:
 	confirmation = None
 

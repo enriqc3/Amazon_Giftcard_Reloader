@@ -1,7 +1,6 @@
 # Amazon_Giftcard_Reloader
 A bot to reload your amazon giftcard using a specific card (must be on file)
 
-Purpose: This bot helps me meet my banks monthly quota on my cards without having to buy useless stuff that I dont need.
 
 ## Disclaimer!
 

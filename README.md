@@ -6,6 +6,9 @@ Purpose: This bot helps me meet my banks monthly quota on my cards without havin
 ## Disclaimer!
 
 This bot requires your amazon email & password. You may also be asked for your 2FA code if your Amazon account requires one when logging in.
+
+NOTE: You must enter the 2FA code in the program and not in the browser!
+
 Please be aware of the security risks. 
 Use this bot at your own risk!
 
@@ -18,12 +21,11 @@ Selenium
 
 
 ## Set Up:
-Configure the following settings in the python code to your account:
+On first run you will be asked to enter your Amazon account email, password, prefferred card (last 4 digits of card on file), and your reload amount.
 
-email = "your email"
+This information will be saved in a seprate config file and loaded each time you run this program.
 
-password = "your password"
+## How to run
+Navigate to the directory where the program is
 
-preffered_card = "last 4 digits of your preferred card" #card must be on file!
-
-reload_amount = "1" #reload amount
+use command ```python3 amazon_Reloader.py```

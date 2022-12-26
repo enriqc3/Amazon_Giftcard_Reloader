@@ -14,7 +14,7 @@ Python
 
 Selenium
 
-chrome drivers
+~~chrome drivers~~
 
 
 ## Set Up:

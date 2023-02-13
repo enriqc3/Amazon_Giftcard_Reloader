@@ -25,14 +25,75 @@ def create_config_file():
 	config.add_section("Settings")
 	config.set("Settings", "preferred_card", pref_card)
 	config.set("Settings", "reload_amount", reload_amount)
+	config.set("Settings", "period", "monthly") #define this ******* FIX THIS ********
 
 	#create a purchaseTracker section
 	config.add_section("purchaseTracker")
-	config.set("purchaseTracker", "purchaseCount", "0")
-	config.set("purchaseTracker", "firstPurchase", "None")
-	config.set("purchaseTracker", "lastPurchase", "None")
+	config.set("purchaseTracker", "purchase_ytd", "0")
+	config.set("purchaseTracker", "purchase_count", "0")
+	config.set("purchaseTracker", "first_purchase", "None")
+	config.set("purchaseTracker", "last_purchase", "None")
+	config.set("purchaseTracker", "start_period", "None")
+	config.set("purchaseTracker", "end_period", "None")
+	
 
 	#create a cookie section
+	config.add_section("Cookies")
+
+	with open("amazonBotConfig.ini", "w") as configfile:
+		config.write(configfile)
+
+
+def update_config_file():
+	config = ConfigParser()
+	config.read("amazonBotConfig.ini")
+	purchaseCount = int(config["purchaseTracker"]["purchase_count"])
+	
+	if purchaseCount == 0:
+		config.set("purchaseTracker", "first_purchase", str(datetime.date.today()))
+		config.set("purchaseTracker", "last_purchase", str(datetime.date.today()))
+	else:
+		config.set("purchaseTracker", "last_purchase", str(datetime.date.today()))
+	
+	purchaseCount += 1
+	config.set("purchaseTracker", "purchase_count", str(purchaseCount))
+	with open("amazonBotConfig.ini", "w") as configfile:
+		config.write(configfile)
+
+
+def store_cookies():
+#get cookies and store them in config file
+	cookies = driver.get_cookies()
+	config = ConfigParser()
+	config.read("amazonBotConfig.ini")
+
+	for cookie in cookies:
+		config.set("Cookies", cookie["name"], cookie["value"])
+
+	with open("amazonBotConfig.ini", "w") as configfile:
+		config.write(configfile)
+
+
+def load_cookies():
+#load cookies from config file
+	config = ConfigParser()
+	config.read("amazonBotConfig.ini")
+	cookies = config["Cookies"]
+
+	if len(cookies) == 0:
+		return False
+
+	for cookie in cookies:
+		driver.add_cookie({"name": cookie, "value": cookies[cookie]})
+
+	return config["Settings"]
+
+
+def delete_cookies():
+#delete cookies from config file
+	config = ConfigParser()
+	config.read("amazonBotConfig.ini")
+	config.remove_section("Cookies")
 	config.add_section("Cookies")
 
 	with open("amazonBotConfig.ini", "w") as configfile:
@@ -60,6 +121,7 @@ def login_using_credentials():
 		print("no error in email found")
 		errorCheck = None
 	
+	driver.find_element(By.NAME, "rememberMe").click()
 	password_login = driver.find_element(By.ID, "ap_password")
 	password_login.clear()
 	password_login.send_keys(config["Credentials"]["password"])
@@ -76,6 +138,7 @@ def login_using_credentials():
 	
 	try:
 		print("checking if 2FA is needed")
+		driver.find_element(By.XPATH, "//*[@id='auth-mfa-remember-device']").click()
 		two_factor = driver.find_element(By.ID, "auth-mfa-otpcode")
 		verification_code = input("Enter the verification code: ")
 		two_factor.clear()
@@ -93,23 +156,6 @@ def login_using_credentials():
 		two_factor = None
 
 	return config["Settings"]
-
-
-def update_config_file():
-	config = ConfigParser()
-	config.read("amazonBotConfig.ini")
-	purchaseCount = int(config["purchaseTracker"]["purchaseCount"])
-	
-	if purchaseCount == 0:
-		config.set("purchaseTracker", "firstPurchase", str(datetime.date.today()))
-		config.set("purchaseTracker", "lastPurchase", str(datetime.date.today()))
-	else:
-		config.set("purchaseTracker", "lastPurchase", str(datetime.date.today()))
-	
-	purchaseCount += 1
-	config.set("purchaseTracker", "purchaseCount", str(purchaseCount))
-	with open("amazonBotConfig.ini", "w") as configfile:
-		config.write(configfile)
 
 
 def change_cards(preferred_card):
@@ -147,34 +193,6 @@ def reload_link_redirect():
 		errorCheck = None
 
 
-def store_cookies():
-#get cookies and store them in config file
-	cookies = driver.get_cookies()
-	config = ConfigParser()
-	config.read("amazonBotConfig.ini")
-
-	for cookie in cookies:
-		config.set("Cookies", cookie["name"], cookie["value"])
-
-	with open("amazonBotConfig.ini", "w") as configfile:
-		config.write(configfile)
-
-
-def load_cookies():
-#load cookies from config file
-	config = ConfigParser()
-	config.read("amazonBotConfig.ini")
-	cookies = config["Cookies"]
-
-	if len(cookies) == 0:
-		return False
-
-	for cookie in cookies:
-		driver.add_cookie({"name": cookie, "value": cookies[cookie]})
-
-	return config["Settings"]
-
-
 
 #**************************** MAIN ****************************
 #check if the config file exists
@@ -185,7 +203,9 @@ except:
 	print("No config file found")
 	create_config_file()
 
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+optns = webdriver.ChromeOptions()
+optns.add_argument("headless")
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=optns)
 driver.get("https://www.amazon.com")
 driver.implicitly_wait(15)
 
@@ -195,12 +215,29 @@ if settings == False:
 	settings = login_using_credentials()
 	store_cookies()
 
-reload_link_redirect()
+attempts = 0
+validate_card = None
+try:
+	while attempts < 3:
+		reload_link_redirect()
 
-reload_input = driver.find_element(By.NAME, "oneTimeReloadAmount")
-reload_input.clear()
-reload_input.send_keys(settings["reload_amount"])
-reload_input.send_keys(Keys.RETURN)
+		reload_input = driver.find_element(By.NAME, "oneTimeReloadAmount")
+		reload_input.clear()
+		reload_input.send_keys(settings["reload_amount"])
+		reload_input.send_keys(Keys.RETURN)
+
+		try:
+			validate_card = driver.find_element(By.XPATH, "//*[@id='payment-information']/div[1]/div/span[2]/span").text
+			break
+		except:
+			attempts += 1
+except:
+	print("error occured.")
+
+if attempts >= 3 or validate_card == None:
+	print("error occured. clearing cookies and exiting")
+	delete_cookies()
+	exit(1)
 
 attempts = 0
 
@@ -220,7 +257,7 @@ if attempts >= 3:
 	exit(1)
 
 #place order (uncomment the next line to automatically place order)
-#place_order = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "[name='placeYourOrder1']"))).click()
+place_order = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "[name='placeYourOrder1']"))).click()
 
 try:
 	confirmation = WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.CLASS_NAME, "a-alert-heading"))).text
@@ -234,3 +271,4 @@ if confirmation == "Order placed, thanks!":
 else:
 	print("Order not placed. Exiting")
 	exit(1)
+

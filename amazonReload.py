@@ -273,26 +273,3 @@ if confirmation == "Order placed, thanks!":
 else:
 	print("Order not placed. Exiting")
 	exit(1)
-
-#To Do
-#1. Add code to update config file if email or password is incorrect
-		#2. Automate getting the 2FA code (text my phone, wait for reply, enter code)
-#3. Maybe add a error log on the config file; if email or pw is incorrect, add to error log
-#4. auto run when the computer starts
-#5. add a GUI
-#6. check if we can encrypt the config file
-#7. set a max number of purchases per month
-
-
-#program flow
-
-#1. check if config file exists
-#1a. if it doesn't exist, create it
-#1b. Ask user if they want to store their credentials, cookies, or both
-#2. check if config file contains cookies
-#2a. if it does, load cookies
-#2b. if it doesn't, check if config file contains credentials
-#2b1. if it does, login
-#2b2. if it doesn't, refer to 1b
-
-#3. proceed with the rest of the program

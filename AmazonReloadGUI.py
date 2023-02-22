@@ -10,7 +10,11 @@ from webdriver_manager.chrome import ChromeDriverManager
 from configparser import ConfigParser
 import datetime
 
+#global variables
 LARGEFONT =("Verdana", 35)
+bgColor = "#222"
+txtBgColor = "#222"
+txtFgColor = "#fff"
 
 class tkinterApp(tk.Tk):
 	
@@ -48,6 +52,8 @@ class tkinterApp(tk.Tk):
 			frame.columnconfigure(0, weight = 1)
 			frame.columnconfigure(1, weight = 1)
 			frame.columnconfigure(2, weight = 1)
+			frame.configure(bg=bgColor)
+
 		self.show_frame(StartPage)
 
 	# to display the current frame passed as
@@ -63,27 +69,27 @@ class StartPage(tk.Frame):
 		tk.Frame.__init__(self, parent)
 
 		#title
-		tk.Label(self, text="Amazon Reloader", font=("Arial", 30)).grid(row=1, column=1, pady=20)
+		tk.Label(self, text="Amazon Reloader", font=("Arial", 30), bg=txtBgColor, fg=txtFgColor).grid(row=1, column=1, pady=20)
 		#titleLabel.place(relx=0.5, rely=0.1, anchor=tk.CENTER)
 		#titleLabel.grid(row=1, column=1, pady=20)
 
 		#stat label
-		tk.Label(self, text="Statistics", font=("Arial", 25)).grid(row=2, column=2, pady=20)
+		tk.Label(self, text="Statistics", font=("Arial", 25), bg=txtBgColor, fg=txtFgColor).grid(row=2, column=2, pady=20)
 
 		#get from config file:
-		tk.Label(self, text="First Purchase: " + fetchFromConfig("firstPurchase"), font=("Arial", 15)).grid(row=3, column=2, padx=10, pady=5, sticky=tk.W)
-		tk.Label(self, text="Last Purchase: " + fetchFromConfig("lastPurchase"), font=("Arial", 15)).grid(row=4, column=2, padx=10, pady=5, sticky=tk.W)
-		self.YTD = tk.Label(self, text="Purchases YTD: " + fetchFromConfig("purchasesYTD"), font=("Arial", 15))
+		tk.Label(self, text="First Purchase: " + fetchFromConfig("firstPurchase"), font=("Arial", 15), bg=txtBgColor, fg=txtFgColor).grid(row=3, column=2, padx=10, pady=5, sticky=tk.W)
+		tk.Label(self, text="Last Purchase: " + fetchFromConfig("lastPurchase"), font=("Arial", 15), bg=txtBgColor, fg=txtFgColor).grid(row=4, column=2, padx=10, pady=5, sticky=tk.W)
+		self.YTD = tk.Label(self, text="Purchases YTD: " + fetchFromConfig("purchasesYTD"), font=("Arial", 15), bg=txtBgColor, fg=txtFgColor)
 		self.YTD.grid(row=5, column=2, padx=10, pady=5, sticky=tk.W)
-		tk.Label(self, text=fetchFromConfig("defThisPeriod") + ": " + fetchFromConfig("thisPeriod"), font=("Arial", 15)).grid(row=6, column=2, padx=10, pady=5, sticky=tk.W)
+		tk.Label(self, text= self.purchaseIntervalDef() + ": " + fetchFromConfig("thisPeriod"), font=("Arial", 15), bg=txtBgColor, fg=txtFgColor).grid(row=6, column=2, padx=10, pady=5, sticky=tk.W)
 		
 		#Account
-		tk.Label(self, text="Account", font=("Arial", 25)).grid(row=2, column=0, padx=10, pady=20)
-		tk.Label(self, text="Email: " + fetchFromConfig("email"), font=("Arial", 15)).grid(row=3, column=0, padx=10, pady=5)
+		tk.Label(self, text="Account", font=("Arial", 25), bg=txtBgColor, fg=txtFgColor).grid(row=2, column=0, padx=10, pady=20)
+		tk.Label(self, text="Email: " + fetchFromConfig("email"), font=("Arial", 15), bg=txtBgColor, fg=txtFgColor).grid(row=3, column=0, padx=10, pady=5)
 
 		#run on pc start checkbok
 		self.checkState = tk.IntVar()
-		tk.Checkbutton(self, text="Run on PC start", variable=self.checkState, command=self.updatePcStart).grid(row=4, column=0, padx=10, pady=5)
+		tk.Checkbutton(self, text="Run on PC start", bg=txtBgColor, fg=txtFgColor, selectcolor=txtBgColor, variable=self.checkState, command=self.updatePcStart).grid(row=4, column=0, padx=10, pady=5)
 
 		#Button to open settings
 		tk.Button(self, text="Settings", command=lambda: controller.show_frame(settings)).grid(row=5, column=0, padx=10, pady=5)
@@ -92,12 +98,22 @@ class StartPage(tk.Frame):
 		runButton = tk.Button(self, text="Run Now!", font=("Arial", 18), command=self.runProgram)
 		runButton.grid(row=7, column=1, padx=10, pady=30)
 
+	def purchaseIntervalDef(self):
+		if fetchFromConfig("defThisPeriod") == "Weekly":
+			return "This Week"
+		elif fetchFromConfig("defThisPeriod") == "Monthly":
+			return "This Month"
+		elif fetchFromConfig("defThisPeriod") == "Yearly":
+			return "This Year"
+		else:
+			return "Today"
+
 	def runProgram(self):
 		# Map this to the run button, after the program runs, delete the label and replace it with a new one
 		#The label must have a variable assigned to it
 		#the label cannot have the grid assigned in one line
 		print("deleting label")
-		self.YTD.destroy()
+		#self.YTD.destroy()
 
 	def updatePcStart(self):
 		if self.checkState.get() == 1:
@@ -113,12 +129,12 @@ class settings(tk.Frame):
 		self.controller = controller
 
 		#title
-		tk.Label(self, text="   ", font=("Arial", 30)).grid(row=1, column=2, pady=20,)
-		tk.Label(self, text="Settings", font=("Arial", 30)).place(relx=0.5, rely=0.1, anchor=tk.CENTER)
+		tk.Label(self, text="   ", font=("Arial", 30), bg=txtBgColor, fg=txtFgColor).grid(row=1, column=2, pady=20,)
+		tk.Label(self, text="Settings", font=("Arial", 30), bg=txtBgColor, fg=txtFgColor).place(relx=0.5, rely=0.1, anchor=tk.CENTER)
 
 		#Account
-		tk.Label(self, text="Email:", font=("Arial", 15)).grid(row=2, column=0, padx=5, pady=10)
-		tk.Label(self, text="Password:", font=("Arial", 15)).grid(row=3, column=0, padx=5, pady=5)
+		tk.Label(self, text="Email:", font=("Arial", 15), bg=txtBgColor, fg=txtFgColor).grid(row=2, column=0, padx=5, pady=10)
+		tk.Label(self, text="Password:", font=("Arial", 15), bg=txtBgColor, fg=txtFgColor).grid(row=3, column=0, padx=5, pady=5)
 
 		#Entry boxes
 		self.emailEntry = tk.Entry(self, width=20)
@@ -130,19 +146,19 @@ class settings(tk.Frame):
 		#show password checkbox
 		self.passwordEntry.config(show="*")
 		self.showPW = tk.IntVar()
-		tk.Checkbutton(self, text="Show Password", variable=self.showPW, command=self.showHidePassword).grid(row=3, column=2, padx=10, pady=10, sticky=tk.W)
+		tk.Checkbutton(self, text="Show Password", bg=txtBgColor, fg=txtFgColor, selectcolor=txtBgColor, variable=self.showPW, command=self.showHidePassword).grid(row=3, column=2, padx=10, pady=10, sticky=tk.W)
 	
 		#checkboxes
 		self.savePW = tk.IntVar()
-		tk.Checkbutton(self, text="Save Password", variable=self.savePW).grid(row=4, column=1, padx=10, pady=10, sticky=tk.W)
+		tk.Checkbutton(self, text="Save Password", bg=txtBgColor, fg=txtFgColor, selectcolor=txtBgColor, variable=self.savePW).grid(row=4, column=1, padx=10, pady=10, sticky=tk.W)
 		self.useCookies = tk.IntVar()
-		tk.Checkbutton(self, text="Use Cookies", variable=self.useCookies).grid(row=5, column=1, padx=10, pady=10, sticky=tk.W)
+		tk.Checkbutton(self, text="Use Cookies", bg=txtBgColor, fg=txtFgColor, selectcolor=txtBgColor, variable=self.useCookies).grid(row=5, column=1, padx=10, pady=10, sticky=tk.W)
 
 		#Right side entries
-		tk.Label(self, text="Last 4 digits of prefered card: ", font=("Arial", 15)).grid(row=2, column=3, padx=10, pady=10)
-		tk.Label(self, text="Reload amount: ", font=("Arial", 15)).grid(row=3, column=3, padx=10, pady=10)
-		tk.Label(self, text="Max purchases: ", font=("Arial", 15)).grid(row=4, column=3, padx=10, pady=10)
-		tk.Label(self, text="Reload interval: ", font=("Arial", 15)).grid(row=5, column=3, padx=10, pady=10)
+		tk.Label(self, text="Last 4 digits of prefered card: ", font=("Arial", 15), bg=txtBgColor, fg=txtFgColor).grid(row=2, column=3, padx=10, pady=10)
+		tk.Label(self, text="Reload amount: ", font=("Arial", 15), bg=txtBgColor, fg=txtFgColor).grid(row=3, column=3, padx=10, pady=10)
+		tk.Label(self, text="Max purchases: ", font=("Arial", 15), bg=txtBgColor, fg=txtFgColor).grid(row=4, column=3, padx=10, pady=10)
+		tk.Label(self, text="Reload interval: ", font=("Arial", 15), bg=txtBgColor, fg=txtFgColor).grid(row=5, column=3, padx=10, pady=10)
 
 		#Entry boxes
 		self.cardEntry = tk.Entry(self, width=10)
@@ -157,7 +173,7 @@ class settings(tk.Frame):
 		#dropdown menu
 		self.interval = tk.StringVar(self)
 		self.interval.set("Daily") # default value
-		intervalMenu = tk.OptionMenu(self, self.interval, "Daily", "Weekly", "Monthly")
+		intervalMenu = tk.OptionMenu(self, self.interval, "Daily", "Weekly", "Monthly", "Yearly")
 		intervalMenu.grid(row=5, column=4, padx=10, pady=10, sticky=tk.W)
 
 		# button to show frame 2 with text
@@ -165,11 +181,11 @@ class settings(tk.Frame):
 		button1 = tk.Button(self, text ="Cancel", font=("Arial, 18"), command = self.cancelSettings)
 		
 		#button1.grid(row = 8, column = 1, pady = 10, sticky=tk.W) #E
-		button1.place(relx=0.4, rely=1.0, anchor=tk.S)
+		button1.place(relx=0.4, rely=0.98, anchor=tk.S)
 
 		# button to save settings
 		saveButton = tk.Button(self, text="Save changes", font=("Arial", 18), command=self.saveSettings)
-		saveButton.place(relx=0.6, rely=1.0, anchor=tk.S)
+		saveButton.place(relx=0.6, rely=0.98, anchor=tk.S)
 
 		self.prefillEntryBoxes()
 
@@ -213,7 +229,10 @@ class settings(tk.Frame):
 		self.controller.show_frame(StartPage)
 
 	def saveSettings(self):
-			
+		savingText = tk.Label(self, text="Saving changes, please wait!", font=("Arial", 20))
+		savingText.place(relx=0.5, rely=0.8, anchor=tk.CENTER)
+		self.update()
+
 		try:
 			config = ConfigParser()
 			config.read("amazonBotConfig.ini")
@@ -232,7 +251,34 @@ class settings(tk.Frame):
 
 		except:
 			print("File doesn't exist, create it")
-			#******* FIX ME ********
+			#create a credentials section
+			config = ConfigParser()
+			config.add_section("Credentials")
+			config.set("Credentials", "email", str(self.emailEntry.get()))
+			config.set("Credentials", "password", str(self.passwordEntry.get()))
+
+			#create a settings section
+			config.add_section("Settings")
+			config.set("Settings", "preferred_card", self.cardEntry.get())
+			config.set("Settings", "reload_amount", self.reloadAmount.get())
+			config.set("Settings", "max_purchases", self.maxPurchase.get())
+			config.set("Settings", "period", self.interval.get()) 
+			config.set("Settings", "status", "")
+
+			#create a purchaseTracker section
+			config.add_section("purchaseTracker")
+			config.set("purchaseTracker", "purchase_ytd", "0")
+			config.set("purchaseTracker", "purchase_count", "0")
+			config.set("purchaseTracker", "first_purchase", "None")
+			config.set("purchaseTracker", "last_purchase", "None")
+			config.set("purchaseTracker", "start_period", "None")
+			config.set("purchaseTracker", "end_period", "None")
+
+			#create a cookie section
+			config.add_section("Cookies")
+
+			with open("amazonBotConfig.ini", "w") as configfile:
+				config.write(configfile)
 
 		if self.useCookies.get() == 1:
 			#Login w/ password to get cookies
@@ -243,26 +289,47 @@ class settings(tk.Frame):
 			driver.get("https://www.amazon.com")
 			driver.implicitly_wait(15)
 
-			#login
-			login_using_credentials(driver, self.passwordEntry.get())
+			#login; returns None if no errors
+			errorCatch = login_using_credentials(driver, self.passwordEntry.get()) 
 
-			#get cookies and store them in config file
-			cookies = driver.get_cookies()
-			config = ConfigParser()
-			config.read("amazonBotConfig.ini")
-
-			for cookie in cookies:
-				config.set("Cookies", cookie["name"], cookie["value"])
-
-			with open("amazonBotConfig.ini", "w") as configfile:
-				config.write(configfile)
-			
-			driver.quit()
+			if errorCatch == None:
+				store_cookies(driver)
+				print("cookies stored")
 		
+			elif errorCatch == "email error":
+				print("email error")
+				#******* FIX ME ********
+				#write message to user
+				#log it to config file
+			elif errorCatch == "password error":
+				print("password error")
+				#******* FIX ME ********
+				#write message to user
+				#log it to config file
+			elif errorCatch == "2FA error":
+				print("2FA error")
+				#******* FIX ME ********
+				#write message to user
+				#log it to config file
+
+			driver.quit()
+		savingText.destroy()
 		self.clearEntryBoxes()
 		self.prefillEntryBoxes()
 		self.controller.show_frame(StartPage)
 
+
+def store_cookies(driver):
+#get cookies and store them in config file
+	cookies = driver.get_cookies()
+	config = ConfigParser()
+	config.read("amazonBotConfig.ini")
+
+	for cookie in cookies:
+		config.set("Cookies", cookie["name"], cookie["value"])
+
+	with open("amazonBotConfig.ini", "w") as configfile:
+		config.write(configfile)
 
 def fetchFromConfig(type):
 	#check type and return value
@@ -295,7 +362,7 @@ def fetchFromConfig(type):
 	except:
 		return "None"
 
-def login_using_credentials(driver, frame = None, pw = None):
+def login_using_credentials(driver, pw = None):
 
 	driver.find_element(By.ID, "nav-link-accountList").click()
 
@@ -313,6 +380,8 @@ def login_using_credentials(driver, frame = None, pw = None):
 		print("\n\n", errorCheck)
 		#have the user re-enter the email & update config file
 		#********** NEED TO ADD CODE HERE **********
+		if pw != None:
+			return "email Error"
 	except:
 		print("no error in email found")
 		errorCheck = None
@@ -332,6 +401,8 @@ def login_using_credentials(driver, frame = None, pw = None):
 		print(errorCheck)
 		#have the user re-enter the password & update config file
 		#********** NEED TO ADD CODE HERE **********
+		if pw != None:
+			return "pw error"
 	except:
 		errorCheck = None
 	
@@ -339,7 +410,27 @@ def login_using_credentials(driver, frame = None, pw = None):
 		print("checking if 2FA is needed")
 		driver.find_element(By.XPATH, "//*[@id='auth-mfa-remember-device']").click()
 		two_factor = driver.find_element(By.ID, "auth-mfa-otpcode")
-		verification_code = input("Enter the verification code: ")
+		verification_code = ""
+
+		if pw != None:
+			top = tk.Toplevel()
+			top.minsize(260, 260)
+			top.maxsize(260, 260)
+			top.title("Amazon Reload")
+			tk.Label(top, text="2FA Verification", font=("Ariel, 25")).grid(row=0,column=0, pady=20, padx=10)
+			tk.Label(top, text="Enter your two-factor authentication code", font=("Ariel, 10")).grid(row=1,column=0, pady=10, padx=10)
+			
+
+			vc = tk.StringVar()
+			tk.Entry(top, textvariable=vc, width=10, font=("Ariel, 20")).grid(row=2,column=0, pady=10, padx=10, sticky=tk.N)
+			tk.Button(top, text="Submit", font=("Ariel, 15"), command=top.destroy).grid(row=3,column=0, pady=10, padx=10, sticky=tk.N)
+			top.wait_window()
+			verification_code = vc.get()
+
+		else:
+			verification_code = input("Enter the verification code: ")
+
+		print("verification code: ", verification_code)
 		two_factor.clear()
 		two_factor.send_keys(verification_code)
 		two_factor.send_keys(Keys.RETURN)
@@ -349,13 +440,17 @@ def login_using_credentials(driver, frame = None, pw = None):
 			print(errorCheck)
 			#have the user re-enter the 2FA code
 			#********** NEED TO ADD CODE HERE **********
+			if pw != None:
+				return "2fa Error"
 		except:
 			errorCheck = None
 	except:
 		two_factor = None
 
-	return config["Settings"]
-
+	if pw == None:
+		return config["Settings"]
+	else:
+		return None
 
 if __name__ == "__main__":
 	# Driver Code

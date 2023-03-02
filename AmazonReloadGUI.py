@@ -600,6 +600,7 @@ def startAmazonReloader():
 		print("No config file found")
 		return "Error config missing", "disabled"
 
+	confirmation = None
 	try:
 		optns = webdriver.ChromeOptions()
 		optns.add_argument("headless")
@@ -661,7 +662,7 @@ def startAmazonReloader():
 		try:
 			confirmation = WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.CLASS_NAME, "a-alert-heading"))).text
 		except:
-			confirmation = None
+			pass
 	except:
 		pass
 

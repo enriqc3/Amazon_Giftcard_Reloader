@@ -15,17 +15,17 @@ LARGEFONT =("Verdana", 35)
 bgColor = "#222"
 txtBgColor = "#222"
 txtFgColor = "#fff"
+errTxtFgColor = "#c40022"
 
 class tkinterApp(tk.Tk):
-	
-	# __init__ function for class tkinterApp
 	def __init__(self, *args, **kwargs):
 		
 		# __init__ function for class Tk
 		tk.Tk.__init__(self, *args, **kwargs)
 
 		self.title("Amazon Reload")
-		self.minsize(800, 400)
+		self.minsize(800, 440)
+		self.configure(bg=bgColor)
 		
 		# creating a container
 		container = tk.Frame(self)
@@ -62,7 +62,6 @@ class tkinterApp(tk.Tk):
 		frame = self.frames[cont]
 		frame.tkraise()
 
-# first window frame startpage
 
 class StartPage(tk.Frame):
 	def __init__(self, parent, controller):
@@ -70,33 +69,57 @@ class StartPage(tk.Frame):
 
 		#title
 		tk.Label(self, text="Amazon Reloader", font=("Arial", 30), bg=txtBgColor, fg=txtFgColor).grid(row=1, column=1, pady=20)
-		#titleLabel.place(relx=0.5, rely=0.1, anchor=tk.CENTER)
-		#titleLabel.grid(row=1, column=1, pady=20)
+
+		#settings gear
+		gearPNG = tk.PhotoImage(file="gears.png")
+		gearSettings = tk.Button(self, image=gearPNG, command=lambda: controller.show_frame(settings), bg=txtBgColor, fg= txtBgColor, activebackground=txtBgColor, bd=0)
+		gearSettings.image = gearPNG
+		gearSettings.place(relx=0.95, rely=0.1, anchor=tk.CENTER)
 
 		#stat label
 		tk.Label(self, text="Statistics", font=("Arial", 25), bg=txtBgColor, fg=txtFgColor).grid(row=2, column=2, pady=20)
 
-		#get from config file:
-		tk.Label(self, text="First Purchase: " + fetchFromConfig("firstPurchase"), font=("Arial", 15), bg=txtBgColor, fg=txtFgColor).grid(row=3, column=2, padx=10, pady=5, sticky=tk.W)
-		tk.Label(self, text="Last Purchase: " + fetchFromConfig("lastPurchase"), font=("Arial", 15), bg=txtBgColor, fg=txtFgColor).grid(row=4, column=2, padx=10, pady=5, sticky=tk.W)
-		self.YTD = tk.Label(self, text="Purchases YTD: " + fetchFromConfig("purchasesYTD"), font=("Arial", 15), bg=txtBgColor, fg=txtFgColor)
-		self.YTD.grid(row=5, column=2, padx=10, pady=5, sticky=tk.W)
-		tk.Label(self, text= self.purchaseIntervalDef() + ": " + fetchFromConfig("thisPeriod"), font=("Arial", 15), bg=txtBgColor, fg=txtFgColor).grid(row=6, column=2, padx=10, pady=5, sticky=tk.W)
-		
+		self.setLabels()
+
 		#Account
 		tk.Label(self, text="Account", font=("Arial", 25), bg=txtBgColor, fg=txtFgColor).grid(row=2, column=0, padx=10, pady=20)
-		tk.Label(self, text="Email: " + fetchFromConfig("email"), font=("Arial", 15), bg=txtBgColor, fg=txtFgColor).grid(row=3, column=0, padx=10, pady=5)
 
 		#run on pc start checkbok
 		self.checkState = tk.IntVar()
 		tk.Checkbutton(self, text="Run on PC start", bg=txtBgColor, fg=txtFgColor, selectcolor=txtBgColor, variable=self.checkState, command=self.updatePcStart).grid(row=4, column=0, padx=10, pady=5)
 
-		#Button to open settings
-		tk.Button(self, text="Settings", command=lambda: controller.show_frame(settings)).grid(row=5, column=0, padx=10, pady=5)
-
 		#Button to run program
 		runButton = tk.Button(self, text="Run Now!", font=("Arial", 18), command=self.runProgram)
 		runButton.grid(row=7, column=1, padx=10, pady=30)
+
+	def setLabels(self):
+		self.firstPurchase = tk.Label(self, text="First Purchase: " + fetchFromConfig("firstPurchase"), font=("Arial", 15), bg=txtBgColor, fg=txtFgColor)
+		self.firstPurchase.grid(row=3, column=2, padx=10, pady=5, sticky=tk.W)
+		self.lastPurchase = tk.Label(self, text="Last Purchase: " + fetchFromConfig("lastPurchase"), font=("Arial", 15), bg=txtBgColor, fg=txtFgColor)
+		self.lastPurchase.grid(row=4, column=2, padx=10, pady=5, sticky=tk.W)
+		self.YTD = tk.Label(self, text="Purchases YTD: " + fetchFromConfig("purchasesYTD"), font=("Arial", 15), bg=txtBgColor, fg=txtFgColor)
+		self.YTD.grid(row=5, column=2, padx=10, pady=5, sticky=tk.W)
+		self.interval = tk.Label(self, text= self.purchaseIntervalDef() + ": " + fetchFromConfig("thisPeriod"), font=("Arial", 15), bg=txtBgColor, fg=txtFgColor)
+		self.interval.grid(row=6, column=2, padx=10, pady=5, sticky=tk.W)
+
+		self.emailLabel = tk.Label(self, text="Email: " + fetchFromConfig("email"), font=("Arial", 15), bg=txtBgColor, fg=txtFgColor)
+		self.emailLabel.grid(row=3, column=0, padx=10, pady=5)
+
+		if fetchFromConfig("log") != "Success":
+			self.logLabel = tk.Label(self, text=fetchFromConfig("log"), font=("Microsoft Sans Serif", 30), bg=txtBgColor, fg=errTxtFgColor)
+			self.logLabel.place(relx=0.2, rely=0.7, anchor=tk.CENTER)
+
+	def destoryLabels(self):
+		self.firstPurchase.destroy()
+		self.lastPurchase.destroy()
+		self.YTD.destroy()
+		self.interval.destroy()
+		self.emailLabel.destroy()
+
+		try:
+			self.logLabel.destroy()
+		except:
+			pass
 
 	def purchaseIntervalDef(self):
 		if fetchFromConfig("defThisPeriod") == "Weekly":
@@ -109,18 +132,19 @@ class StartPage(tk.Frame):
 			return "Today"
 
 	def runProgram(self):
-		# Map this to the run button, after the program runs, delete the label and replace it with a new one
-		#The label must have a variable assigned to it
-		#the label cannot have the grid assigned in one line
-		print("deleting label")
-		#self.YTD.destroy()
+
+		if fetchFromConfig("status") == "enabled":
+			result, status = startAmazonReloader()
+			update_config_file(result, status)
+			self.destoryLabels()
+			self.setLabels()
 
 	def updatePcStart(self):
 		if self.checkState.get() == 1:
 			print("Program will run on PC start")
 		else:
 			print("Program will not run on PC start")
-		
+
 
 # second window frame page1
 class settings(tk.Frame):
@@ -150,9 +174,13 @@ class settings(tk.Frame):
 	
 		#checkboxes
 		self.savePW = tk.IntVar()
-		tk.Checkbutton(self, text="Save Password", bg=txtBgColor, fg=txtFgColor, selectcolor=txtBgColor, variable=self.savePW).grid(row=4, column=1, padx=10, pady=10, sticky=tk.W)
+		tk.Checkbutton(self, text="Save Password", bg=txtBgColor, fg=txtFgColor, selectcolor=txtBgColor, variable=self.savePW).grid(row=4, column=0, padx=10, pady=10, sticky=tk.E)
 		self.useCookies = tk.IntVar()
-		tk.Checkbutton(self, text="Use Cookies", bg=txtBgColor, fg=txtFgColor, selectcolor=txtBgColor, variable=self.useCookies).grid(row=5, column=1, padx=10, pady=10, sticky=tk.W)
+		tk.Checkbutton(self, text="Use Cookies", bg=txtBgColor, fg=txtFgColor, selectcolor=txtBgColor, variable=self.useCookies).grid(row=4, column=1, padx=10, pady=10, sticky=tk.E)
+
+		if fetchFromConfig("log") != "Success":
+			self.logLabel = tk.Label(self, text=fetchFromConfig("log"), font=("Microsoft Sans Serif", 30), bg=txtBgColor, fg=errTxtFgColor)
+			self.logLabel.place(relx=0.25, rely=0.7, anchor=tk.CENTER)
 
 		#Right side entries
 		tk.Label(self, text="Last 4 digits of prefered card: ", font=("Arial", 15), bg=txtBgColor, fg=txtFgColor).grid(row=2, column=3, padx=10, pady=10)
@@ -175,9 +203,9 @@ class settings(tk.Frame):
 		self.interval.set("Daily") # default value
 		intervalMenu = tk.OptionMenu(self, self.interval, "Daily", "Weekly", "Monthly", "Yearly")
 		intervalMenu.grid(row=5, column=4, padx=10, pady=10, sticky=tk.W)
+		intervalMenu.config(bg=txtBgColor, fg=txtFgColor, activebackground=txtBgColor, activeforeground=txtFgColor, highlightbackground=txtFgColor, highlightcolor=txtBgColor, bd=0)
 
 		# button to show frame 2 with text
-		#button1 = tk.Button(self, text ="Cancel", font=("Arial, 18"), command = lambda : controller.show_frame(StartPage))
 		button1 = tk.Button(self, text ="Cancel", font=("Arial, 18"), command = self.cancelSettings)
 		
 		#button1.grid(row = 8, column = 1, pady = 10, sticky=tk.W) #E
@@ -232,6 +260,7 @@ class settings(tk.Frame):
 		savingText = tk.Label(self, text="Saving changes, please wait!", font=("Arial", 20))
 		savingText.place(relx=0.5, rely=0.8, anchor=tk.CENTER)
 		self.update()
+		errorCatch = ""
 
 		try:
 			config = ConfigParser()
@@ -240,14 +269,18 @@ class settings(tk.Frame):
 			config.set("Credentials", "email", str(self.emailEntry.get()))
 			if self.savePW.get == 1:
 				config.set("Credentials", "password", str(self.passwordEntry.get()))
+				errorCatch = "Success"
 			else:
 				config.set("Credentials", "password", "")
+
 			config.set("Settings", "preferred_card", self.cardEntry.get())
 			config.set("Settings", "reload_amount", self.reloadAmount.get())
 			config.set("Settings", "max_purchases", self.maxPurchase.get())
 			config.set("Settings", "period", self.interval.get())
 			with open("amazonBotConfig.ini", "w") as configfile:
 				config.write(configfile)
+
+			delete_cookies()
 
 		except:
 			print("File doesn't exist, create it")
@@ -263,7 +296,8 @@ class settings(tk.Frame):
 			config.set("Settings", "reload_amount", self.reloadAmount.get())
 			config.set("Settings", "max_purchases", self.maxPurchase.get())
 			config.set("Settings", "period", self.interval.get()) 
-			config.set("Settings", "status", "")
+			config.set("Settings", "log", "success")
+			config.set("Settings", "status", "enabled")
 
 			#create a purchaseTracker section
 			config.add_section("purchaseTracker")
@@ -281,43 +315,88 @@ class settings(tk.Frame):
 				config.write(configfile)
 
 		if self.useCookies.get() == 1:
-			#Login w/ password to get cookies
-			print("Login w/ password to get cookies")
-			optns = webdriver.ChromeOptions()
-			optns.add_argument("headless")
-			driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))#, options=optns)
-			driver.get("https://www.amazon.com")
-			driver.implicitly_wait(15)
+			try:
+				#Login w/ password to get cookies
+				print("Login w/ password to get cookies")
+				optns = webdriver.ChromeOptions()
+				optns.add_argument("headless")
+				driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))#, options=optns)
+				driver.get("https://www.amazon.com")
+				driver.implicitly_wait(15)
 
-			#login; returns None if no errors
-			errorCatch = login_using_credentials(driver, self.passwordEntry.get()) 
+				#login; returns None if no errors
+				errorCatch = login_using_credentials(driver, self.passwordEntry.get()) 
+				print("error catch: ", errorCatch)
+				if errorCatch == "Success":
+					store_cookies(driver)
+					print("cookies stored")
+					self.clearEntryBoxes()
+					self.prefillEntryBoxes()
+			except:
+				errorCatch = "Error starting driver"
+			try:
+				print("closing driver")
+				driver.quit()
+			except:
+				pass
 
-			if errorCatch == None:
-				store_cookies(driver)
-				print("cookies stored")
-		
-			elif errorCatch == "email error":
-				print("email error")
-				#******* FIX ME ********
-				#write message to user
-				#log it to config file
-			elif errorCatch == "password error":
-				print("password error")
-				#******* FIX ME ********
-				#write message to user
-				#log it to config file
-			elif errorCatch == "2FA error":
-				print("2FA error")
-				#******* FIX ME ********
-				#write message to user
-				#log it to config file
+		config = ConfigParser()
+		config.read("amazonBotConfig.ini")
+		config.set("Settings", "log", str(errorCatch))
+		if errorCatch == "Success":
+			config.set("Settings", "status", "enabled")
+		else:
+			config.set("Settings", "status", "disabled")
 
-			driver.quit()
+		with open("amazonBotConfig.ini", "w") as configfile:
+			config.write(configfile)
+
+
+		try:
+			self.logLabel.destroy()	
+		except:
+			pass
+
+		self.controller.frames[StartPage].destoryLabels()
+		self.controller.frames[StartPage].setLabels()
+
+		if fetchFromConfig("log") != "Success":
+			self.logLabel = tk.Label(self, text=fetchFromConfig("log"), font=("Microsoft Sans Serif", 30), bg=txtBgColor, fg=errTxtFgColor)
+			self.logLabel.place(relx=0.25, rely=0.7, anchor=tk.CENTER)
+		else:
+			self.controller.show_frame(StartPage)
+
 		savingText.destroy()
-		self.clearEntryBoxes()
-		self.prefillEntryBoxes()
-		self.controller.show_frame(StartPage)
 
+
+def update_config_file(log, status = "enabled"):
+	try:
+		config = ConfigParser()
+		config.read("amazonBotConfig.ini")
+
+		if log == "Success":
+			purchaseCount = int(config["purchaseTracker"]["purchase_count"])
+			YTDcount = int(config["purchaseTracker"]["purchase_ytd"])
+			
+			if purchaseCount == 0:
+				config.set("purchaseTracker", "first_purchase", str(datetime.date.today()))
+				config.set("purchaseTracker", "last_purchase", str(datetime.date.today()))
+			else:
+				config.set("purchaseTracker", "last_purchase", str(datetime.date.today()))
+			
+			purchaseCount += 1
+			YTDcount += 1
+			config.set("purchaseTracker", "purchase_count", str(purchaseCount))
+			config.set("purchaseTracker", "purchase_ytd", str(YTDcount))
+		
+		config.set("Settings", "status", status)
+		config.set("Settings", "log", log)
+
+		with open("amazonBotConfig.ini", "w") as configfile:
+			config.write(configfile)
+	
+	except:
+		print("error updating config")
 
 def store_cookies(driver):
 #get cookies and store them in config file
@@ -330,6 +409,20 @@ def store_cookies(driver):
 
 	with open("amazonBotConfig.ini", "w") as configfile:
 		config.write(configfile)
+
+def load_cookies(driver):
+#load cookies from config file
+	config = ConfigParser()
+	config.read("amazonBotConfig.ini")
+	cookies = config["Cookies"]
+
+	if len(cookies) == 0:
+		return False
+
+	for cookie in cookies:
+		driver.add_cookie({"name": cookie, "value": cookies[cookie]})
+
+	return config["Settings"]
 
 def fetchFromConfig(type):
 	#check type and return value
@@ -356,6 +449,10 @@ def fetchFromConfig(type):
 				return config["Settings"]["reload_amount"]
 			case "maxPurchase":
 				return config["Settings"]["max_purchases"]
+			case "log":
+				return config["Settings"]["log"]
+			case "status":
+				return config["Settings"]["status"]
 			case _:
 				return "Error"
 			
@@ -381,7 +478,7 @@ def login_using_credentials(driver, pw = None):
 		#have the user re-enter the email & update config file
 		#********** NEED TO ADD CODE HERE **********
 		if pw != None:
-			return "email Error"
+			return "incorrect email"
 	except:
 		print("no error in email found")
 		errorCheck = None
@@ -402,7 +499,7 @@ def login_using_credentials(driver, pw = None):
 		#have the user re-enter the password & update config file
 		#********** NEED TO ADD CODE HERE **********
 		if pw != None:
-			return "pw error"
+			return "Incorrect password"
 	except:
 		errorCheck = None
 	
@@ -441,7 +538,7 @@ def login_using_credentials(driver, pw = None):
 			#have the user re-enter the 2FA code
 			#********** NEED TO ADD CODE HERE **********
 			if pw != None:
-				return "2fa Error"
+				return "Incorrect two-factor auth"
 		except:
 			errorCheck = None
 	except:
@@ -450,7 +547,139 @@ def login_using_credentials(driver, pw = None):
 	if pw == None:
 		return config["Settings"]
 	else:
-		return None
+		return "Success"
+
+def reload_link_redirect(driver):
+	driver.get("https://www.amazon.com/gp/product/B086KKT3RX?ref_=gcui_b_e_rb_c_d")
+	try:
+		errorCheck = driver.find_element(By.CLASS_NAME, "a-alert-content").text
+		exit(1)
+	except:
+		errorCheck = None
+
+def delete_cookies():
+#delete cookies from config file
+	config = ConfigParser()
+	config.read("amazonBotConfig.ini")
+	config.remove_section("Cookies")
+	config.add_section("Cookies")
+
+	with open("amazonBotConfig.ini", "w") as configfile:
+		config.write(configfile)
+
+def change_cards(driver, preferred_card):
+	try:	
+		WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.ID, 'payChangeButtonId'))).click()
+	except:
+		print("payment method already displayed")
+
+	WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-number='" + preferred_card + "']"))).click()
+
+	#card number verification required
+	try:
+		print("checking if card number is required")
+		card_input = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='ending in" + preferred_card +"']")))
+		card_number = input("Enter the card number for verification purposes: ")
+		card_input.clear()
+		card_input.send_keys(card_number)
+		card_input.send_keys(Keys.RETURN)
+	except:
+		print("Card number not required")
+	
+	try:
+		WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.NAME, "ppw-widgetEvent:SetPaymentPlanSelectContinueEvent"))).click()
+	except:
+		print("attempting xpath for switching cards")
+		driver.find_element(By.XPATH, "//*[@id='pp-iHSqqX-143']/span/input").click()
+
+def startAmazonReloader():
+	try:
+		with open("amazonBotConfig.ini", "r") as configfile:
+			print("Config file found")
+	except:
+		print("No config file found")
+		return "Error config missing", "disabled"
+
+	try:
+		optns = webdriver.ChromeOptions()
+		optns.add_argument("headless")
+		driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=optns)
+		driver.get("https://www.amazon.com")
+		driver.implicitly_wait(15)
+
+		settings = load_cookies(driver)
+		if settings == False:
+			print("No cookies found")
+			settings = login_using_credentials()
+			#store_cookies(driver)
+
+		attempts = 0
+		validate_card = None
+		try:
+			while attempts < 3:
+				reload_link_redirect(driver)
+
+				reload_input = driver.find_element(By.NAME, "oneTimeReloadAmount")
+				reload_input.clear()
+				reload_input.send_keys(settings["reload_amount"])
+				reload_input.send_keys(Keys.RETURN)
+
+				try:
+					validate_card = driver.find_element(By.XPATH, "//*[@id='payment-information']/div[1]/div/span[2]/span").text
+					break
+				except:
+					attempts += 1
+		except:
+			print("error occured.")
+
+		if attempts >= 3 or validate_card == None:
+			print("error occured. clearing cookies and exiting")
+			delete_cookies(driver)
+			return "Error logging in", "disabled"
+
+		attempts = 0
+
+		while attempts < 3:
+			print("\nChecking if we need to switch payment methods. Attempt", attempts + 1, "of 3")
+			validate_card = driver.find_element(By.XPATH, "//*[@id='payment-information']/div[1]/div/span[2]/span").text
+			if validate_card == settings["preferred_card"]:
+				print("card being used matches the preferred card")
+				break
+			else:
+				print("Not the same card. Switching payment methods")
+				change_cards(driver, settings["preferred_card"])
+				attempts += 1
+
+		if attempts >= 3:
+			print("\nUnable to switch payment methods. Exiting")
+			return "Error switching cards", "enabled"
+
+		#place order (uncomment the next line to automatically place order)
+		WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "[name='placeYourOrder1']"))).click()
+		#driver.find_element(By.ID, "bottomSubmitOrderButtonId").click()
+
+		try:
+			confirmation = WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.CLASS_NAME, "a-alert-heading"))).text
+		except:
+			confirmation = None
+	except:
+		pass
+
+	try:
+		driver.quit()
+	except:
+		pass
+
+	if confirmation == "Order placed, thanks!":
+		print("Order placed successfully")
+		#update the config file
+		#update_config_file()
+		return "Success", "enabled"
+	else:
+		print("Order not placed. Exiting")
+		return "Order not placed", "enabled"
+
+
 
 if __name__ == "__main__":
 	# Driver Code

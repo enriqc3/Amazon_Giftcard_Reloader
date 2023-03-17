@@ -13,7 +13,7 @@ NOTE: You must enter the 2FA code in the program and not in the browser!
 Use this bot at your own risk!
 
 ## Pre-Reqs:
-Python
+Python 3.10 or greater
 
 Selenium: ```pip install selenium```
 

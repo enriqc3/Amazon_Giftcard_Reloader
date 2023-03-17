@@ -9,6 +9,10 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from configparser import ConfigParser
 import datetime
+import os
+import getpass
+import sys
+from platform import system as system_name # Returns the system/OS name
 
 #global variables
 LARGEFONT =("Verdana", 35)
@@ -54,10 +58,12 @@ class tkinterApp(tk.Tk):
 			frame.columnconfigure(2, weight = 1)
 			frame.configure(bg=bgColor)
 
-		self.show_frame(StartPage)
+		if fetchFromConfig("status") == "enabled":
+			self.show_frame(StartPage)
+		else:
+			self.show_frame(settings)
 
-	# to display the current frame passed as
-	# parameter
+	# to display the current frame passed asparameter
 	def show_frame(self, cont):
 		frame = self.frames[cont]
 		frame.tkraise()
@@ -132,18 +138,43 @@ class StartPage(tk.Frame):
 			return "Today"
 
 	def runProgram(self):
-
 		if fetchFromConfig("status") == "enabled":
+			runningText = tk.Label(self, text="Running, please wait!", font=("Arial", 20))
+			runningText.place(relx=0.5, rely=0.8, anchor=tk.CENTER)
+			self.update()
+			
 			result, status = startAmazonReloader()
 			update_config_file(result, status)
 			self.destoryLabels()
 			self.setLabels()
 
+			runningText.destroy()
+
 	def updatePcStart(self):
+
+		result = ""
 		if self.checkState.get() == 1:
-			print("Program will run on PC start")
+			result = add_remove_startup(add = True)
 		else:
-			print("Program will not run on PC start")
+			result = add_remove_startup(add = False)
+
+		try:
+				config = ConfigParser()
+				config.read("amazonBotConfig.ini")
+				if self.checkState.get() == 0 or result == False:
+					config.set("Settings", "run_on_start", "False")
+				else:
+					config.set("Settings", "run_on_start", "True")
+				
+				with open("amazonBotConfig.ini", "w") as configfile:
+					config.write(configfile)
+		except:
+			print("Error reading config file")
+			if result == True and self.checkState.get() == 1:
+				add_remove_startup(add = False)
+				self.checkState.set(0)
+		
+		#TODO: add success or failed message
 
 
 # second window frame page1
@@ -219,23 +250,23 @@ class settings(tk.Frame):
 
 	def prefillEntryBoxes(self):
 		#prefill email if saved
-		if fetchFromConfig("email") != "None":
+		if fetchFromConfig("email") != "No config file found":
 			self.emailEntry.insert(0, fetchFromConfig("email"))
 		
 		#prefill last 4 digits of card if saved
-		if fetchFromConfig("card") != "None":
+		if fetchFromConfig("card") != "No config file found":
 			self.cardEntry.insert(0, fetchFromConfig("card"))
 		
 		#prefill reload amount if saved
-		if fetchFromConfig("reloadAmount") != "None":
+		if fetchFromConfig("reloadAmount") != "No config file found":
 			self.reloadAmount.insert(0, fetchFromConfig("reloadAmount"))
 		
 		#prefill max purchases if saved
-		if fetchFromConfig("maxPurchase") != "None":
+		if fetchFromConfig("maxPurchase") != "No config file found":
 			self.maxPurchase.insert(0, fetchFromConfig("maxPurchase"))
 
 		#prefill interval if saved
-		if fetchFromConfig("interval") != "None":
+		if fetchFromConfig("defThisPeriod") != "No config file found":
 			self.interval.set(fetchFromConfig("defThisPeriod"))
 
 	def clearEntryBoxes(self):
@@ -269,7 +300,6 @@ class settings(tk.Frame):
 			config.set("Credentials", "email", str(self.emailEntry.get()))
 			if self.savePW.get == 1:
 				config.set("Credentials", "password", str(self.passwordEntry.get()))
-				errorCatch = "Success"
 			else:
 				config.set("Credentials", "password", "")
 
@@ -280,15 +310,16 @@ class settings(tk.Frame):
 			with open("amazonBotConfig.ini", "w") as configfile:
 				config.write(configfile)
 
-			delete_cookies()
-
 		except:
 			print("File doesn't exist, create it")
 			#create a credentials section
 			config = ConfigParser()
 			config.add_section("Credentials")
 			config.set("Credentials", "email", str(self.emailEntry.get()))
-			config.set("Credentials", "password", str(self.passwordEntry.get()))
+			if self.savePW.get == 1:
+				config.set("Credentials", "password", str(self.passwordEntry.get()))
+			else:
+				config.set("Credentials", "password", "")
 
 			#create a settings section
 			config.add_section("Settings")
@@ -298,6 +329,7 @@ class settings(tk.Frame):
 			config.set("Settings", "period", self.interval.get()) 
 			config.set("Settings", "log", "success")
 			config.set("Settings", "status", "enabled")
+			config.set("Settings", "run_on_start", "False")
 
 			#create a purchaseTracker section
 			config.add_section("purchaseTracker")
@@ -314,7 +346,12 @@ class settings(tk.Frame):
 			with open("amazonBotConfig.ini", "w") as configfile:
 				config.write(configfile)
 
+		errorCatch = "Success"
+		update_time_period(force_update = True)
+
 		if self.useCookies.get() == 1:
+			errorCatch = ""
+			delete_cookies()
 			try:
 				#Login w/ password to get cookies
 				print("Login w/ password to get cookies")
@@ -457,7 +494,7 @@ def fetchFromConfig(type):
 				return "Error"
 			
 	except:
-		return "None"
+		return "No config file found"
 
 def login_using_credentials(driver, pw = None):
 
@@ -475,7 +512,7 @@ def login_using_credentials(driver, pw = None):
 		print("validating email")
 		errorCheck = driver.find_element(By.ID, "auth-error-message-box").text
 		print("\n\n", errorCheck)
-		#have the user re-enter the email & update config file
+		#TODO: have the user re-enter the email & update config file
 		#********** NEED TO ADD CODE HERE **********
 		if pw != None:
 			return "incorrect email"
@@ -496,7 +533,7 @@ def login_using_credentials(driver, pw = None):
 		print("validating password")
 		errorCheck = driver.find_element(By.ID, "auth-error-message-box").text
 		print(errorCheck)
-		#have the user re-enter the password & update config file
+		#TODO: have the user re-enter the password & update config file
 		#********** NEED TO ADD CODE HERE **********
 		if pw != None:
 			return "Incorrect password"
@@ -535,7 +572,7 @@ def login_using_credentials(driver, pw = None):
 			print("validating 2FA")
 			errorCheck = driver.find_element(By.ID, "auth-error-message-box").text
 			print(errorCheck)
-			#have the user re-enter the 2FA code
+			#TODO: have the user re-enter the 2FA code
 			#********** NEED TO ADD CODE HERE **********
 			if pw != None:
 				return "Incorrect two-factor auth"
@@ -635,7 +672,7 @@ def startAmazonReloader():
 
 		if attempts >= 3 or validate_card == None:
 			print("error occured. clearing cookies and exiting")
-			delete_cookies(driver)
+			delete_cookies()
 			return "Error logging in", "disabled"
 
 		attempts = 0
@@ -655,14 +692,20 @@ def startAmazonReloader():
 			print("\nUnable to switch payment methods. Exiting")
 			return "Error switching cards", "enabled"
 
-		#place order (uncomment the next line to automatically place order)
-		WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "[name='placeYourOrder1']"))).click()
-		#driver.find_element(By.ID, "bottomSubmitOrderButtonId").click()
+		attempts = 0
+		while attempts < 3 and confirmation == None:
+			print("\nAttempting to place order. Attempt", attempts + 1, "of 3")
+			attempts += 1
+			#place order (uncomment the next line to automatically place order)
+			#WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "[name='placeYourOrder1']"))).click()
+			WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "submitOrderButtonId"))).click()
+			#driver.find_element(By.ID, "bottomSubmitOrderButtonId").click()
+			#driver.find_element(By.ID, "submitOrderButtonId").send_keys("\n")
 
-		try:
-			confirmation = WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.CLASS_NAME, "a-alert-heading"))).text
-		except:
-			pass
+			try:
+				confirmation = WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.CLASS_NAME, "a-alert-heading"))).text
+			except:
+				pass
 	except:
 		pass
 
@@ -680,9 +723,88 @@ def startAmazonReloader():
 		print("Order not placed. Exiting")
 		return "Order not placed", "enabled"
 
+def update_time_period(force_update = False):
+	#update the time period in config file
+	try:
+		config = ConfigParser()
+		config.read("amazonBotConfig.ini")
+
+		startDate = str(config["purchaseTracker"]["start_period"])
+		endDate = str(config["purchaseTracker"]["end_period"])
+		currentDate = datetime.date.today()
+
+		if startDate > str(currentDate) or endDate < str(currentDate) or force_update == True:
+			print("time period has expired")
+			
+			#update the time period
+			period = str(config["Settings"]["period"])
+
+			if period == "Weekly":
+				start_period = currentDate - datetime.timedelta(days=currentDate.weekday())
+				end_period = start_period + datetime.timedelta(days=6)
+
+			elif period == "Monthly":
+				start_period = datetime.date(currentDate.year, currentDate.month, 1)
+				end_period = last_day_of_month(datetime.date(currentDate.year, currentDate.month, 1))
+
+			elif period == "Yearly":
+				start_period = datetime.date(currentDate.year, 1, 1)
+				end_period = datetime.date(currentDate.year, 12, 31)
+			else:
+				config.set("Settings", "period", "Today")
+				start_period = currentDate
+				end_period = currentDate
+
+			config.set("purchaseTracker", "start_period", str(start_period))
+			config.set("purchaseTracker", "end_period", str(end_period))
+			with open("amazonBotConfig.ini", "w") as configfile:
+				config.write(configfile)
+	except:
+		print("error updating time period")
+
+def last_day_of_month(any_day):
+	# The day 28 exists in every month. 4 days later, it's always next month
+	next_month = any_day.replace(day=28) + datetime.timedelta(days=4)
+	# subtracting the number of the current day brings us back one month
+	return next_month - datetime.timedelta(days=next_month.day)
+
+def add_remove_startup(file_path="", add=True) -> bool:
+	#check OS is windows
+	if system_name() != "Windows":
+		print("OS is not windows. Exiting")
+		return False
+	
+	USER_NAME = getpass.getuser()
+
+	if add:
+		if file_path == "":
+			file_path = os.path.dirname(os.path.realpath(__file__)) + "\\" + os.path.basename(__file__)
+			print(file_path)
+		bat_path = r'C:\Users\%s\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup' % USER_NAME
+
+		with open(bat_path + '\\' + "open.bat", "w+") as bat_file:
+			bat_file.write(r'start "" "%s"' % file_path)
+	else:
+		#remove file from startup
+		bat_path = r'C:\Users\%s\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup' % USER_NAME
+		try:
+			os.remove(bat_path + '\\' + "open.bat")
+		except:
+			print("error removing file from startup")
+			return False
+
+	return True
 
 
 if __name__ == "__main__":
-	# Driver Code
-	app = tkinterApp()
-	app.mainloop()
+	update_time_period()
+
+	if len(sys.argv) == 2 and sys.argv[1] == "headless":
+		print("running in headless mode")
+		#TODO: check if we have reached the purchase limit for the period
+		#TODO: run the program w/o GUI
+	else:
+		print("running in GUI mode")
+		app = tkinterApp()
+		app.mainloop()
+
